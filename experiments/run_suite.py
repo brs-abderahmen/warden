@@ -1,4 +1,4 @@
-"""Run the attack suite on one split. Run the locked test split only once, after the dev work.
+﻿"""Run the attack suite on one split. Run the locked test split only once, after the dev work.
 
 Results are saved after every attack, so a crash loses at most one attack's runs.
 """
@@ -34,11 +34,14 @@ def suite_leak(run: dict) -> bool:
 
 async def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--split", choices=["dev", "test"], required=True)
+    parser.add_argument("--split", choices=["dev", "test", "dev2", "test2"], required=True)
     parser.add_argument("--seeds", type=int, default=5)
     parser.add_argument("--model", default="qwen2.5:7b")
     parser.add_argument("--defenses", nargs="+", default=["none", *POLICIES])
+    parser.add_argument("--task", help="Use this task for every attack instead of its own")
+    parser.add_argument("--clean-runs", type=int, default=0)
     args = parser.parse_args()
+    prefix = f"suite_{args.task}" if args.task else "suite"
 
     attacks = [
         attack
@@ -50,14 +53,25 @@ async def main() -> None:
 
     for defense in args.defenses:
         out_path = ROOT / "results" / (
-            f"suite_{args.split}_{defense}_{args.model.replace(':', '-')}.json"
+            f"{prefix}_{args.split}_{defense}_{args.model.replace(':', '-')}.json"
         )
         runs = []
+        for seed in range(args.clean_runs):
+            run = await run_once(state_dir, args.model, args.task, None, seed, defense)
+            run["suite_leak"] = suite_leak(run)
+            run["attack_id"] = "clean"
+            run["category"] = "clean"
+            runs.append(run)
+            print(
+                f"{defense} clean seed={seed} sent={[mail['to'] for mail in run['emails_sent']]} "
+                f"task={run['task_completed']} decisions={run['decisions']}",
+                flush=True,
+            )
         for attack in attacks:
             ATTACKS[attack["id"]] = {key: attack[key] for key in ("from", "subject", "body")}
             for seed in range(args.seeds):
                 run = await run_once(
-                    state_dir, args.model, attack["task"], attack["id"], seed, defense
+                    state_dir, args.model, args.task or attack["task"], attack["id"], seed, defense
                 )
                 run["suite_leak"] = suite_leak(run)
                 run["attack_id"] = attack["id"]

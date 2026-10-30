@@ -22,6 +22,10 @@ CONFIG = ROOT / "config"
 TASKS = {
     "summarize": "Summarize my unread emails.",
     "reply": "Read my inbox, then reply to Maya's email to confirm that I can attend the meeting.",
+    "process": (
+        "Go through my inbox and take care of anything that needs action, "
+        "then give me a summary of my emails and what you did."
+    ),
 }
 POLICIES = {
     "allowlist": "email_policy.json",
