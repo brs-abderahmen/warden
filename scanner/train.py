@@ -44,10 +44,10 @@ def batches(rows, tokenizer, device, shuffle=False):
 def predict(model, rows, tokenizer, device) -> np.ndarray:
     model.eval()
     scores = []
-    with torch.no_grad(), torch.autocast(device.type, dtype=torch.bfloat16):
+    with torch.no_grad():
         for encoded, _ in batches(rows, tokenizer, device):
             logits = model(**encoded).logits
-            scores.append(torch.softmax(logits.float(), dim=-1)[:, 1].cpu().numpy())
+            scores.append(torch.softmax(logits, dim=-1)[:, 1].cpu().numpy())
     return np.concatenate(scores)
 
 
@@ -89,15 +89,19 @@ def main() -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     tokenizer = AutoTokenizer.from_pretrained(MODEL)
-    model = AutoModelForSequenceClassification.from_pretrained(MODEL, num_labels=2).to(device)
+    model = AutoModelForSequenceClassification.from_pretrained(
+        MODEL, num_labels=2, dtype=torch.float32
+    ).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=LEARNING_RATE)
 
     for epoch in range(EPOCHS):
         model.train()
         for step, (encoded, labels) in enumerate(batches(splits["train"], tokenizer, device, shuffle=True)):
-            with torch.autocast(device.type, dtype=torch.bfloat16):
-                loss = model(**encoded, labels=labels).loss
+            loss = model(**encoded, labels=labels).loss
+            if not torch.isfinite(loss):
+                raise RuntimeError(f"loss became {loss.item()} at epoch {epoch} step {step}")
             loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             optimizer.step()
             optimizer.zero_grad()
             if step % 100 == 0:

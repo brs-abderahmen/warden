@@ -1,6 +1,6 @@
 """Tool pinning: approve a tool once, then block it if it ever changes.
 
-Create pins with: python -m warden.pinning <pins.json> -- <upstream command> [args...]
+Create pins with: python -m warden.pinning [--scanner run_dir] <pins.json> -- <upstream command> [args...]
 """
 
 import asyncio
@@ -56,25 +56,42 @@ class Pins:
         return f"tool '{name}' is no longer offered by the server"
 
 
-async def create_pins(upstream_params: StdioServerParameters, path: Path) -> None:
+async def create_pins(upstream_params: StdioServerParameters, path: Path, scanner=None) -> list[str]:
+    """Pin the server's tools. Tools the scanner flags are not pinned. Returns their names."""
     async with stdio_client(upstream_params) as (read, write):
         async with ClientSession(read, write) as session:
             await session.initialize()
             tools = await list_all_tools(session)
-    pins = {tool.name: fingerprint(tool) for tool in tools}
+    flagged = [
+        tool.name
+        for tool in tools
+        if scanner is not None and scanner.flags(f"{tool.name}: {tool.description or ''}")
+    ]
+    pins = {tool.name: fingerprint(tool) for tool in tools if tool.name not in flagged}
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(pins, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return flagged
 
 
 def main() -> None:
     args = sys.argv[1:]
+    scanner = None
+    if args[:1] == ["--scanner"]:
+        from warden.scanner import Scanner
+
+        scanner = Scanner(Path(args[1]))
+        args = args[2:]
     if len(args) < 3 or args[1] != "--":
-        sys.exit("Usage: python -m warden.pinning <pins.json> -- <upstream command> [args...]")
+        sys.exit(
+            "Usage: python -m warden.pinning [--scanner run_dir] <pins.json> -- <upstream command> [args...]"
+        )
     command, *command_args = args[2:]
     upstream_params = StdioServerParameters(
         command=command, args=command_args, env=dict(os.environ)
     )
-    asyncio.run(create_pins(upstream_params, Path(args[0])))
+    flagged = asyncio.run(create_pins(upstream_params, Path(args[0]), scanner))
+    if flagged:
+        print(f"Not pinned, flagged by the scanner: {', '.join(flagged)}")
 
 
 if __name__ == "__main__":
