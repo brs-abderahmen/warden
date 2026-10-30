@@ -44,7 +44,7 @@ On a normal reply task, 17 of 20 runs sent the email in every setup, with no cal
 
 ### Tool description scanner
 
-A DeBERTa-v3-small classifier that checks tool descriptions before they are pinned. Trained on 18,754 real descriptions from 453 MCP repositories plus generated poison. Repositories and attack styles in the test set never appear in training.
+A DeBERTa-v3-small classifier that checks tool descriptions before they are pinned. I collected 18,754 real descriptions from 453 MCP repositories, then capped each repository at 150. The final dataset has 16,543 examples: 11,777 real descriptions and 4,766 generated poisons from 37 attack templates, with 11,552 used for training. Repositories and attack styles in the test set never appear in training.
 
 | | Generated test set | 20 hand-written poisons, 20 hard benign |
 |---|---|---|
