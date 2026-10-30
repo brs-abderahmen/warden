@@ -42,10 +42,14 @@ Known gap: the normal task never sends email, so false blocks are untested. Phas
 
 ## Phase 3: Data tagging and approval
 
-- [ ] Tag tool output as untrusted
-- [ ] Policy engine with YAML rules
-- [ ] Human approval step
-- [ ] Tamper-evident (hash-chained) audit log
+- [x] Tag tool output as untrusted
+- [x] Policy engine with JSON rules, on-overlap and strict modes
+- [x] Scripted approval step that blocks when no approver is set
+- [x] Tamper-evident (hash-chained) audit log
+- [x] Seed 5 leak stopped: 0 of 50 direct attacks and 0 of 30 spoofed attacks leaked with tracking
+- [ ] Real human approval interface
+
+Known gap: every normal send needed approval under tracking, because replies reuse addresses from the inbox.
 
 ## Phase 4: Scanner
 
