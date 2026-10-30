@@ -29,11 +29,16 @@ Nightshift, the on-call agent project, comes after Warden and uses it for safe a
 
 ## Phase 2: Proxy and first defense
 
-- [ ] Pass-through MCP proxy with no change in behavior
-- [ ] Tool pinning (SHA-256 of description and schema)
-- [ ] First policy blocks the Phase 1 attack
-- [ ] Before-and-after demo recorded
-- [ ] Repo made public and added to CV
+- [x] Pass-through MCP proxy with no change in behavior
+- [x] Tool pinning (SHA-256 of description and schema)
+- [x] First policy blocks emails to the attacker's address
+- [x] Before-and-after demo recorded: the secret left in 5 of 50 attacked runs without Warden and 1 of 50 with it
+- [x] Repo made public
+- [ ] Added to CV
+
+Known gap: in seed 5 the agent was blocked, then sent the secret to `it-support@company.test`, the attack email's fake sender on an allowed domain. An allowlist cannot catch this. Phase 3 must.
+
+Known gap: the normal task never sends email, so false blocks are untested. Phase 5 needs normal tasks that do.
 
 ## Phase 3: Data tagging and approval
 
