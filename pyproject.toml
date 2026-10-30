@@ -1,0 +1,13 @@
+[project]
+name = "warden"
+version = "0.0.1"
+description = "A security proxy for AI agents that use MCP tools"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "mcp>=2,<3",
+    "ollama",
+]
+
+[tool.uv]
+package = false
