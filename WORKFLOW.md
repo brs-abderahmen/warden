@@ -42,17 +42,28 @@ Known gap: the normal task never sends email, so false blocks are untested. Phas
 
 ## Phase 3: Data tagging and approval
 
-- [ ] Tag tool output as untrusted
-- [ ] Policy engine with YAML rules
-- [ ] Human approval step
-- [ ] Tamper-evident (hash-chained) audit log
+- [x] Tag tool output as untrusted
+- [x] Policy engine with JSON rules, on-overlap and strict modes
+- [x] Scripted approval step that blocks when no approver is set
+- [x] Tamper-evident (hash-chained) audit log
+- [x] Seed 5 leak stopped: 0 of 50 direct attacks and 0 of 30 spoofed attacks leaked with tracking
+- [ ] Real human approval interface
+
+- [x] Locked test, 20 attacks and 100 runs: 14 leaks without Warden, 14 with the allowlist, 0 with tracking. Tasks passed fell from 99 to 85
+
+Known gap: every normal send needed approval under tracking, because replies reuse addresses from the inbox.
+
+Known gap: after a denied send, the agent usually writes the reply as text instead of sending a clean one. That caused the task losses in the locked test.
 
 ## Phase 4: Scanner
 
-- [ ] Collect real tool descriptions from public MCP registries
-- [ ] Generate poisoned examples
-- [ ] Fine-tune the classifier, splitting train and test by MCP server
-- [ ] Add the scanner to the proxy
+- [x] Collect real tool descriptions from public MCP registries
+- [x] Generate poisoned examples
+- [x] Fine-tune the classifier, splitting train and test by MCP server
+- [x] Add the scanner to the proxy (flagged tools are not pinned)
+- [x] Hand-written challenge set: 13 of 20 poisons caught, 1 of 20 benign flagged
+
+Known gap: the scanner misses about a third of careful human attacks and almost all French ones.
 
 ## Phase 5: Evaluation and release
 

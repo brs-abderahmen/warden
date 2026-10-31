@@ -50,7 +50,7 @@ def run_send(tmp_path, policy_rules, recipient):
     state_path = tmp_path / "state.json"
     write_state(state_path)
     policy_path = tmp_path / "policy.json"
-    policy_path.write_text(json.dumps(policy_rules), encoding="utf-8")
+    policy_path.write_text(json.dumps({"rules": policy_rules}), encoding="utf-8")
     params = server_params(state_path, proxied=True, proxy_args=("--policy", str(policy_path)))
 
     async def run():

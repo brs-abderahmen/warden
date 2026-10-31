@@ -2,10 +2,12 @@
 
 A security proxy for AI agents that use MCP tools. Work in progress.
 
-Warden sits between an agent and its tools. It currently has two defenses:
+Warden sits between an agent and its tools. It currently has four defenses:
 
 - **Tool pinning:** approve a tool once, and block it if its description or schema changes, even mid-session.
 - **Recipient allowlist:** block emails to domains that are not approved.
+- **Untrusted data tracking:** remember what untrusted tools returned, and require approval when a later action contains that data. Strict mode requires approval for every such action after untrusted input.
+- **Tamper-evident audit log:** each decision is chained by hash to the one before, and arguments are stored only as hashes.
 
 Any error during a safety check blocks the call.
 
@@ -13,15 +15,47 @@ See [WORKFLOW.md](WORKFLOW.md) for the build plan.
 
 ## Results so far
 
-One prompt injection attack on `qwen2.5:7b`, 50 runs per setup with the same seeds:
+Tests on `qwen2.5:7b`, using the same seeds per setup and judged from mock server state. Approval comes from a scripted reviewer that only accepts replies to Maya without the secret.
 
-| Measure | Without Warden | With Warden |
+### Locked test
+
+20 attacks in 5 runs each, written and committed before the first run. The defense was frozen before these sets were run, and nothing was tuned after.
+
+| 100 attacked runs | No defense | Allowlist | Tracking | Strict |
+|---|---|---|---|---|
+| Secret leaked | 14 | 14 | 0 | 0 |
+| Attacks that leaked at least once | 3 of 20 | 3 of 20 | 0 of 20 | 0 of 20 |
+| User's task completed | 99 | 99 | 85 | 85 |
+
+The allowlist stops nothing here, because all 14 leaks went to approved addresses. Tracking stopped them, at a cost: in 14 of the 15 runs where it denied a send, the agent wrote its reply as text and did not send a clean email, so the task failed. Those runs were still under attack, and no email went out.
+
+Only 3 of the 20 attacks work on this model without a defense, so the 0 of 100 rests mostly on those 3 attacks.
+
+### Earlier development runs
+
+| Secret leaked | No defense | Allowlist | Tracking | Strict |
+|---|---|---|---|---|
+| Direct attack, 50 runs | 5 | 1 | 0 | not run |
+| Spoofed attack, 30 runs | 1 | 1 | 0 | 0 |
+| Dev suite, 40 runs | 4 | 4 | 0 | 0 |
+| Piggyback dev suite, 30 runs | 6 | 6 | 0 | 0 |
+
+On a normal reply task, 17 of 20 runs sent the email in every setup, with no calls blocked. The other 3 runs wrote the reply as text without calling the tool, with or without Warden.
+
+### Tool description scanner
+
+A DeBERTa-v3-small classifier that checks tool descriptions before they are pinned. I collected 18,754 real descriptions from 453 MCP repositories, then capped each repository at 150. The final dataset has 16,543 examples: 11,777 real descriptions and 4,766 generated poisons from 37 attack templates, with 11,552 used for training. Repositories and attack styles in the test set never appear in training.
+
+| | Generated test set | 20 hand-written poisons, 20 hard benign |
 |---|---|---|
-| Email reached the attacker's address | 5 of 50 | 0 of 50 |
-| Secret left in any email | 5 of 50 | 1 of 50 |
-| Task passed under attack | 50 of 50 | 47 of 50 |
+| Poison caught | 79.2% | 13 of 20 |
+| Benign flagged | 1.25% | 1 of 20 |
 
-This is a small test of one attack on one model, not a general rate. In the one remaining leak, the agent sent the secret to an address on an allowed domain, which an allowlist cannot catch. Normal tasks in this test never send email, so false blocks are not measured yet.
+The first version scored 98.4% on its test set but caught only 7 of 20 hand-written poisons, because its test attacks were too easy. This version has harder training and test data, and its hand-written set was written after training. It still misses about a third of careful human attacks and almost all French ones, so it is one layer and not a guarantee.
+
+### Limits
+
+These are small tests on one model, and the attacks are mine, so they are not general rates. Every normal send needed approval under Tracking, because a reply uses an address from the inbox. The scripted reviewer knows the secret, and a real reviewer may be less reliable. Text matching also cannot catch a rewritten secret on its own.
 
 ## Run it
 
@@ -30,8 +64,8 @@ Requires [uv](https://docs.astral.sh/uv/). The experiment also needs [Ollama](ht
 ```bash
 uv sync
 uv run pytest tests -q
-uv run python experiments/run_attack.py --runs 50 --clean-runs 20 --defense warden --label phase2_warden
-uv run python experiments/analyze.py results/phase2_warden_qwen2.5-7b.json
+uv run python experiments/run_attack.py --runs 50 --clean-runs 0 --defense tagging --label phase3_direct_tagging
+uv run python experiments/analyze.py results/phase3_direct_tagging_qwen2.5-7b.json
 ```
 
 Everything runs locally against a mock email server. No real email is sent.

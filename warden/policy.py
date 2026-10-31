@@ -1,7 +1,13 @@
-"""First policy: a recipient allowlist for tools that send messages.
+"""Policies: a recipient allowlist, plus which tools need approval after untrusted input.
 
-The JSON policy file maps a tool name to its rule:
-{"send_email": {"recipient_argument": "to", "allowed_domains": ["company.test"]}}
+The JSON policy file looks like:
+{"rules": {"send_email": {"recipient_argument": "to", "allowed_domains": ["company.test"]}},
+ "untrusted_sources": ["read_inbox"],
+ "approval_tools": ["send_email"],
+ "approval_mode": "on_overlap"}
+
+In "on_overlap" mode, a call needs approval if it contains untrusted data.
+In "always" mode, every approval tool needs approval once untrusted data has been read.
 """
 
 import json
@@ -27,12 +33,29 @@ def recipient_domains(value: str) -> list[str | None]:
 
 
 class Policy:
-    def __init__(self, rules: dict[str, dict]):
+    def __init__(
+        self,
+        rules: dict[str, dict],
+        untrusted_sources: tuple[str, ...] = (),
+        approval_tools: tuple[str, ...] = (),
+        approval_mode: str = "on_overlap",
+    ):
+        if approval_mode not in ("on_overlap", "always"):
+            raise ValueError(f"unknown approval mode: {approval_mode}")
         self.rules = rules
+        self.untrusted_sources = untrusted_sources
+        self.approval_tools = approval_tools
+        self.approval_mode = approval_mode
 
     @classmethod
     def load(cls, path: Path) -> "Policy":
-        return cls(json.loads(path.read_text(encoding="utf-8")))
+        data = json.loads(path.read_text(encoding="utf-8"))
+        return cls(
+            data["rules"],
+            tuple(data.get("untrusted_sources", ())),
+            tuple(data.get("approval_tools", ())),
+            data.get("approval_mode", "on_overlap"),
+        )
 
     def check(self, name: str, arguments: dict) -> str | None:
         """Return a reason to block this call, or None if it is allowed."""

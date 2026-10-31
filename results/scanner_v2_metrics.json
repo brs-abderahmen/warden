@@ -1,0 +1,39 @@
+{
+  "model": "microsoft/deberta-v3-small",
+  "threshold": 0.1370820552110672,
+  "val": {
+    "precision": 0.9691714836223507,
+    "recall": 0.7762345679012346,
+    "f1": 0.8620394173093402,
+    "auc": 0.938043959065586,
+    "false_positive_rate": 0.010329244673983214,
+    "recall_by_family": {
+      "admin_mode": 0.9787234042553191,
+      "compliance_audit": 0.9562043795620438,
+      "subtle_as_user": 0.0196078431372549,
+      "subtle_faster": 0.7593984962406015,
+      "tool_priority": 0.9703703703703703
+    },
+    "count": 2197
+  },
+  "test": {
+    "precision": 0.9620637329286799,
+    "recall": 0.7915106117353309,
+    "f1": 0.8684931506849315,
+    "auc": 0.9524775540859927,
+    "false_positive_rate": 0.012543903662819869,
+    "recall_by_family": {
+      "data_format": 0.945054945054945,
+      "debug_pretext": 0.9866666666666667,
+      "french": 0.0625,
+      "implicit_dependency": 0.97,
+      "polite_helper": 0.9852941176470589,
+      "reward_threat": 1.0,
+      "role_play": 0.9887640449438202,
+      "subtle_mirrored": 0.9743589743589743,
+      "subtle_outranks": 0.010526315789473684,
+      "subtle_support": 1.0
+    },
+    "count": 2794
+  }
+}
