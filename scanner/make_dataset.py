@@ -2,7 +2,8 @@
 
 Splits are by repository, so a repository never appears in two splits. Poison families are
 also split, so the test set only contains attack styles the model never saw in training.
-Usage: python scanner/make_dataset.py <benign.jsonl> <dataset.jsonl>
+Generated sentences, when given, keep their own split, so test goals and styles stay unseen.
+Usage: python scanner/make_dataset.py <benign.jsonl> <dataset.jsonl> [generated.jsonl]
 """
 
 import hashlib
@@ -12,8 +13,10 @@ import sys
 from collections import Counter, defaultdict
 from pathlib import Path
 
-MAX_PER_REPO = 150
+MAX_PER_REPO = 300
 POISON_RATIO = 0.4
+GENERATED_POISON_RATIO = 0.6
+GENERATED_BENIGN_RATIO = 0.3
 SEED = 13
 
 FILES = ["~/.ssh/id_rsa", "~/.aws/credentials", ".env", "~/.config/gcloud/credentials.db", "~/.netrc"]
@@ -87,7 +90,10 @@ def fill(template: str, rng: random.Random) -> str:
 
 
 def poison(description: str, template: str, rng: random.Random) -> str:
-    payload = fill(template, rng)
+    return insert(description, fill(template, rng), rng)
+
+
+def insert(description: str, payload: str, rng: random.Random) -> str:
     position = rng.choice(["start", "end", "end", "middle"])
     if position == "start":
         return f"{payload} {description}"
@@ -98,8 +104,19 @@ def poison(description: str, template: str, rng: random.Random) -> str:
     return ". ".join(sentences[:middle] + [payload] + sentences[middle:])
 
 
+def load_generated(path: Path) -> dict:
+    """Clean generated sentences, grouped by (split, label). Exact repeats are dropped."""
+    grouped = defaultdict(dict)
+    for line in path.read_text(encoding="utf-8").splitlines():
+        row = json.loads(line)
+        if 20 <= len(row["text"]) <= 300:
+            grouped[(row["split"], row["label"])][row["text"]] = row
+    return {key: list(rows.values()) for key, rows in grouped.items()}
+
+
 def main() -> None:
     rng = random.Random(SEED)
+    generated = load_generated(Path(sys.argv[3])) if len(sys.argv) > 3 else {}
     rows = [json.loads(line) for line in Path(sys.argv[1]).read_text(encoding="utf-8").splitlines()]
 
     by_repo = defaultdict(list)
@@ -118,6 +135,18 @@ def main() -> None:
                 poisoned = poison(tool["description"], FAMILIES[split][family], rng)
                 records.append(
                     {"text": f"{tool['name']}: {poisoned}", "label": 1, "repo": repo, "family": family, "split": split}
+                )
+            if generated and rng.random() < GENERATED_POISON_RATIO:
+                row = rng.choice(generated[(split, 1)])
+                text = insert(tool["description"], row["text"], rng)
+                records.append(
+                    {"text": f"{tool['name']}: {text}", "label": 1, "repo": repo, "family": f"gen: {row['style']}", "split": split}
+                )
+            if generated and rng.random() < GENERATED_BENIGN_RATIO:
+                row = rng.choice(generated[(split, 0)])
+                text = insert(tool["description"], row["text"], rng)
+                records.append(
+                    {"text": f"{tool['name']}: {text}", "label": 0, "repo": repo, "family": "gen_benign", "split": split}
                 )
 
     rng.shuffle(records)
