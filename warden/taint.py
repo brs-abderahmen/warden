@@ -6,6 +6,7 @@ Matching is on text, so a rewritten secret will not match. Strict approval mode 
 import re
 
 TOKEN = re.compile(r"[^\W_]+(?:[-@.][^\W_]+)*")
+DOMAIN = re.compile(r"(?:[a-z0-9-]+\.)+[a-z]{2,}")
 SHINGLE_WORDS = 4
 
 
@@ -14,8 +15,12 @@ def tokens(text: str) -> list[str]:
 
 
 def is_identifier(token: str) -> bool:
-    """Addresses and codes are distinctive enough to match on a single token."""
-    return "@" in token or (len(token) >= 6 and any(char.isdigit() for char in token))
+    """Addresses, domains and codes are distinctive enough to match on a single token."""
+    return (
+        "@" in token
+        or bool(DOMAIN.fullmatch(token))
+        or (len(token) >= 6 and any(char.isdigit() for char in token))
+    )
 
 
 def shingles(words: list[str]) -> set[tuple[str, ...]]:
