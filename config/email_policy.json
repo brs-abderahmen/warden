@@ -1,6 +1,8 @@
 {
-  "send_email": {
-    "recipient_argument": "to",
-    "allowed_domains": ["company.test"]
+  "rules": {
+    "send_email": {
+      "recipient_argument": "to",
+      "allowed_domains": ["company.test"]
+    }
   }
 }

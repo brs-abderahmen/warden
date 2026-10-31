@@ -1,0 +1,11 @@
+{
+  "rules": {
+    "send_email": {
+      "recipient_argument": "to",
+      "allowed_domains": ["company.test"]
+    }
+  },
+  "untrusted_sources": ["read_inbox"],
+  "approval_tools": ["send_email"],
+  "approval_mode": "always"
+}

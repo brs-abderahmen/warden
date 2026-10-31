@@ -29,6 +29,28 @@ def setup(tmp_path):
     return description, pins, proxied
 
 
+class FlagEverything:
+    def flags(self, text):
+        return "lookup" in text
+
+
+def test_flagged_tool_is_not_pinned_and_stays_blocked(tmp_path):
+    _, pins, proxied = setup(tmp_path)
+    upstream = StdioServerParameters(
+        command=sys.executable, args=[MUTABLE_SERVER], env=proxied.env
+    )
+    flagged = asyncio.run(create_pins(upstream, pins, FlagEverything()))
+    assert flagged == ["lookup"]
+
+    async def run():
+        async with connect(proxied) as session:
+            return await session.call_tool("lookup", {})
+
+    result = asyncio.run(run())
+    assert result.is_error
+    assert "has not been approved" in result.content[0].text
+
+
 def test_unchanged_tool_is_listed_and_runs(tmp_path):
     _, _, proxied = setup(tmp_path)
 
