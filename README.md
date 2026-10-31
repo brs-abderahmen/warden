@@ -53,6 +53,19 @@ A DeBERTa-v3-small classifier that checks tool descriptions before they are pinn
 
 The first version scored 98.4% on its test set but caught only 7 of 20 hand-written poisons, because its test attacks were too easy. This version has harder training and test data, and its hand-written set was written after training. It still misses about a third of careful human attacks and almost all French ones, so it is one layer and not a guarantee.
 
+A third version trained on almost twice as much data: 30,720 examples in total, 21,378 for training, with new attacks written by a local model in five languages. Its fresh hand-written set was committed before the training data was generated.
+
+| | Second version | Third version |
+|---|---|---|
+| Generated test set, poison caught | 79.2% | 70.5% |
+| Generated test set, benign flagged | 1.25% | 0.56% |
+| Generated test set, AUC | 0.9525 | 0.9783 |
+| 30 fresh hand-written poisons caught | 10 | 11 |
+| 30 fresh hard benign flagged | 0 | 2 |
+| Earlier 20 hand-written poisons caught | 13 | 10 |
+
+More data improved ranking on generated attacks, but it did not help on human attacks. The two generated test sets differ, so their rows are not a direct comparison. Several missed attacks scored just below the very strict threshold of 0.9998. That threshold has not been changed, because tuning it on these sets would spoil them.
+
 ### Limits
 
 These are small tests on one model, and the attacks are mine, so they are not general rates. Every normal send needed approval under Tracking, because a reply uses an address from the inbox. The scripted reviewer knows the secret, and a real reviewer may be less reliable. Text matching also cannot catch a rewritten secret on its own.

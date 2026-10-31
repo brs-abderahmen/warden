@@ -63,7 +63,9 @@ Known gap: after a denied send, the agent usually writes the reply as text inste
 - [x] Add the scanner to the proxy (flagged tools are not pinned)
 - [x] Hand-written challenge set: 13 of 20 poisons caught, 1 of 20 benign flagged
 
-Known gap: the scanner misses about a third of careful human attacks and almost all French ones.
+- [x] Larger, more varied dataset and retrain: 11 of 30 fresh poisons caught, 2 of 30 benign flagged
+
+Known gap: the scanner misses most careful human attacks on the fresh set. Any new threshold must be chosen on validation data and tested on another fresh set.
 
 ## Phase 5: Evaluation and release
 
