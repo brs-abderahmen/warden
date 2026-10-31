@@ -109,6 +109,8 @@ def load_generated(path: Path) -> dict:
     grouped = defaultdict(dict)
     for line in path.read_text(encoding="utf-8").splitlines():
         row = json.loads(line)
+        # Only harmless sentences say "MCP", which would be an easy shortcut for the model.
+        row["text"] = row["text"].replace("MCP ", "")
         if 20 <= len(row["text"]) <= 300:
             grouped[(row["split"], row["label"])][row["text"]] = row
     return {key: list(rows.values()) for key, rows in grouped.items()}
