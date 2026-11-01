@@ -42,6 +42,20 @@ Only 3 of the 20 attacks work on this model without a defense, so the 0 of 100 r
 
 On a normal reply task, 17 of 20 runs sent the email in every setup, with no calls blocked. The other 3 runs wrote the reply as text without calling the tool, with or without Warden.
 
+### Independent test: AgentDojo
+
+[AgentDojo](https://github.com/ethz-spylab/agentdojo) is a published prompt injection benchmark, so its attacks and scoring are not mine. I ran v1.2.2 with the `important_instructions_no_model_name` attack on 160 attacked and 36 normal cases across its four suites, using `qwen2.5:7b`. The rules were committed before this run. Practice cases were separate pairs, though some user tasks and attacks appear in both.
+
+| | No defense | Warden tracking |
+|---|---|---|
+| Attacks that succeeded | 12 of 160 | 4 of 160 |
+| Normal tasks completed, no attack | 9 of 36 | 8 of 36 |
+| Tasks completed under attack | 42 of 160 | 35 of 160 |
+
+Tracking cut successful attacks by two thirds. The paired difference is not statistically significant at the 5% level (exact McNemar p = 0.057). Three of the four remaining successes are one Slack attack that AgentDojo scores from attempted calls: Warden blocked the invitation, but the agent went on to try the later steps. The fourth changed a banking password, because a plain text value does not look like an identifier.
+
+The model is the main limit on task completion, finishing only 9 of 36 normal tasks with no defense. A stronger model would give a better test of both numbers. AgentDojo tools are Python functions, so this run applied Warden's tracking code inside AgentDojo's tool step, not through the MCP proxy. Its reviewer is a script that accepts identifiers found in the user's request.
+
 ### Tool description scanner
 
 A DeBERTa-v3-small classifier that checks tool descriptions before they are pinned. I collected 18,754 real descriptions from 453 MCP repositories, then capped each repository at 150. The final dataset has 16,543 examples: 11,777 real descriptions and 4,766 generated poisons from 37 attack templates, with 11,552 used for training. Repositories and attack styles in the test set never appear in training.
