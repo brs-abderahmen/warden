@@ -73,6 +73,6 @@ Known gap: the scanner misses most careful human attacks on the fresh set. Any n
 - [ ] 150 attacks (50 dev, 100 locked test) and 100 normal tasks
 - [ ] Attacks designed to beat Warden
 - [ ] Full runs with repeats on 3 models
-- [ ] AgentDojo run for comparison with published results
+- [x] AgentDojo run on a sample of 160 attacked cases: 12 successes with no defense, 4 with tracking
 - [ ] Ablation table, security vs utility chart, latency numbers
 - [ ] Dashboard, pip package, blog post

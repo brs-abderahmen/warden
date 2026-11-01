@@ -27,6 +27,13 @@ def untrusted():
     return data
 
 
+def test_domain_from_untrusted_data_matches():
+    data = UntrustedData()
+    data.add("Please visit www.true-informations.com today.")
+    assert data.overlaps("https://www.true-informations.com")
+    assert not data.overlaps("Total is 12.50 for today")
+
+
 @pytest.mark.parametrize(
     "text",
     [SECRET, f"code: {SECRET.lower()}.", "IT-SUPPORT@COMPANY.TEST", "the meeting moved to friday at ten"],
