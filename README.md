@@ -78,7 +78,16 @@ A third version trained on almost twice as much data: 30,720 examples in total, 
 | 30 fresh hard benign flagged | 0 | 2 |
 | Earlier 20 hand-written poisons caught | 13 | 10 |
 
-More data improved ranking on generated attacks, but it did not help on human attacks. The two generated test sets differ, so their rows are not a direct comparison. Several missed attacks scored just below the very strict threshold of 0.9998. That threshold has not been changed, because tuning it on these sets would spoil them.
+More data improved ranking on generated attacks, but it did not help on human attacks. The two generated test sets differ, so their rows are not a direct comparison. Several missed attacks scored just below the very strict threshold of 0.9998. That threshold was not tuned on these sets, because that would spoil them.
+
+So I chose a looser cut-off on validation data only, at a 5% false alarm rate, and tested it once on a new hand-written set. The set and the 5% target were committed before any scoring. A flag only asks a person to review a tool before pinning it, so extra false alarms are cheap.
+
+| 30 new poisons, 30 new hard benign | Old cut-off (0.9998) | New cut-off (0.145) |
+|---|---|---|
+| Poisons caught | 17 | 23 |
+| Benign flagged | 3 | 4 |
+
+The new cut-off caught 78.9% of validation poisons at 5.0% false alarms. On the hand-written benign tools it flagged 13%, because that set is made of hard cases, so 5% does not hold on them. I wrote both this set and the model's training attacks, and 60 examples is a small sample.
 
 ### Limits
 

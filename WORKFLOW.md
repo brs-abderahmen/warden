@@ -65,7 +65,7 @@ Known gap: after a denied send, the agent usually writes the reply as text inste
 
 - [x] Larger, more varied dataset and retrain: 11 of 30 fresh poisons caught, 2 of 30 benign flagged
 
-Known gap: the scanner misses most careful human attacks on the fresh set. Any new threshold must be chosen on validation data and tested on another fresh set.
+- [x] Cut-off chosen on validation data, tested on another fresh set: 23 of 30 poisons caught, 4 of 30 benign flagged
 
 ## Phase 5: Evaluation and release
 
