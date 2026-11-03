@@ -4,3 +4,4 @@ __pycache__/
 .env
 results/state/
 scanner/data/
+results/demo/
