@@ -11,7 +11,8 @@ class Scanner:
 
         self.torch = torch
         self.device = device
-        self.threshold = json.loads((run_dir / "metrics.json").read_text(encoding="utf-8"))["threshold"]
+        metrics = json.loads((run_dir / "metrics.json").read_text(encoding="utf-8"))
+        self.threshold = metrics.get("review_cutoff", metrics["threshold"])
         self.tokenizer = AutoTokenizer.from_pretrained(run_dir / "model")
         self.model = AutoModelForSequenceClassification.from_pretrained(
             run_dir / "model", dtype=torch.float32
